@@ -91,18 +91,12 @@ class Ultra:
 
     def parse(self, data: str):
         row_data = data.split("\n")
-        for i, el in enumerate(row_data):
-            debugger(i, el.split("#")),
-
-    def parse2(self, data: str):
-        row_data = data.split("\n")
         data = {}
-        for i, el in enumerate(row_data):
+        for el in row_data:
             row = el.split("#")
             row = row[1:-1]
             row.remove("$")
             dic = {row[0]: row[1]}
-            row = dic
             data.update(dic)
             # debugger(i, dic)
         debugger(data)
@@ -130,6 +124,8 @@ class Ultra:
             self.time = data["t"]
         except KeyError:
             self.time = UNSET
+
+
 def main():
     # connecting by client
     packet = Ultra(O=CONNECTING, f=(PUSH, SYN), n=100)
@@ -184,26 +180,29 @@ def main():
 
     # guess number
     packet = Ultra(O=GUESS, o=400, I=ses, f=PUSH, n=(1200, ack_n))
-    # debugger(packet)
+    debugger(packet)
     ack_n = int(packet.flags_id[0]) + 1
 
     # ack
     packet = Ultra(O=GUESS, I=ses, f=ACK, n=(1300, ack_n))
-    # debugger(packet)
+    debugger(packet)
     ack_n = int(packet.flags_id[0]) + 1
 
     # send response - who wins
     packet = Ultra(O=RESPONSE, o="You win/You loss", I=ses, f=PUSH, n=(1400, ack_n))
-    # debugger(packet)
+    debugger(packet)
     ack_n = int(packet.flags_id[0]) + 1
 
     # ack
     packet = Ultra(O=RESPONSE, I=ses, f=ACK, n=(1500, ack_n))
-    # debugger(packet)
+    debugger(packet)
     ack_n = int(packet.flags_id[0]) + 1
 
-    print("@@@@@ parsing @@@@@")
-    packet.parse2(str(Ultra(O=RESPONSE, I=ses, f=ACK, n=(1500, ack_n))))
+    print("@@@@@ parsing @@@@@\n\n")
+    packet.parse(str(Ultra(O=RESPONSE, I=ses, f=ACK, n=(1500, ack_n))))
+
+    print("@@@@@ parsing @@@@@\n\n")
+    packet.parse(str(Ultra(O=RESPONSE, I=ses, f=ACK, n=(1500, ack_n))))
 
 
 if __name__ == "__main__":
