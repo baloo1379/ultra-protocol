@@ -11,20 +11,37 @@ class ThreadedUDPHandler(socketserver.BaseRequestHandler):
         global clients
         u.debugger("Handle entered")
         data = str(self.request[0], "ascii")
-        u.debugger("data:", data)
-        packet = proto.Ultra()
+        cur_thread = threading.current_thread()
+        u.debugger("on {} {} wrote:".format(cur_thread.name, self.client_address[0]))
+        query = proto.Ultra()
         try:
-            packet = packet.parse(data)
+            query.parse(data)
         except ValueError as err:
             print(err)
-        cur_thread = threading.current_thread()
+        else:
+            print(query)
+            response = proto.Ultra()
+            u.debugger(query.flags)
+            if query.flags == (proto.PUSH, proto.SYN):
+                # first connect packet from client
+                current_session_id = randrange(0, 1024)
+                ack = query.flags_id[0] + 1
+                u.debugger("connecting", current_session_id, ack)
+                response = proto.Ultra(O=query.operation, I=current_session_id, f=(proto.PUSH, proto.ACK, proto.SYN),
+                                       n=(randrange(0, 1024), ack))
 
-        # response = bytes(str(proto.Ultra(O=proto.CONNECTING, I=)), 'ascii')
-        socket = self.request[1]
-        print("on {} {} wrote:".format(cur_thread.name, self.client_address[0]))
+            s = self.request[1]
+            u.debugger("prepared response: ", response)
+            response = bytes(str(response), 'ascii')
+            s.sendto(response, self.client_address)
+        finally:
+            u.debugger("Handle exited")
 
-        # socket.sendto(response, self.client_address)
-        u.debugger("Handle exited")
+
+
+
+
+
 
 
 class ThreadedUDPServer(socketserver.ThreadingMixIn, socketserver.UDPServer):

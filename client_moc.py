@@ -10,5 +10,7 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 data = proto.Ultra(O=proto.CONNECTING, f=(proto.PUSH, proto.SYN), n=100)
 u.debugger(data)
 sock.sendto(bytes(str(data), "ascii"), (HOST, PORT))
+data = sock.recv(1024)
+print(str(data, "ascii"))
 
 sys.exit()

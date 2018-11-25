@@ -1,5 +1,5 @@
 import time
-
+import re
 
 DEBUG = True
 
@@ -52,7 +52,6 @@ class Ultra:
             self.response = o
 
         self.session_id = I
-        self.flags = f
 
         if type(f) is not tuple:
             self.flags = f,
@@ -89,7 +88,7 @@ class Ultra:
             result += "#f#$#"
             for i, el in enumerate(self.flags):
                 result += str(el)
-                if i < len(self.flags)-1:
+                if i < len(self.flags) - 1:
                     result += ":"
             result += "#\n"
 
@@ -120,15 +119,30 @@ class Ultra:
         except KeyError:
             self.operation = UNSET
         try:
-            self.response = data["o"]
+            pattern1 = "\d+"
+            pattern2 = "[=<>]"
+            result = tuple(re.findall(pattern1, data["o"]))
+            if result is not None:
+                debugger(result)
+                self.response = result
+            else:
+                result = tuple(re.findall(pattern2, data["o"]))
+                debugger(result)
+                self.response = result
         except KeyError:
             self.response = UNSET
         try:
-            self.flags = data["f"]
+            pattern = "\w+"
+            result = tuple(re.findall(pattern, data["f"]))
+            debugger(result)
+            self.flags = result
         except KeyError:
             self.flags = UNSET
         try:
-            self.flags_id = data["n"]
+            pattern = "\d+"
+            result = tuple(re.findall(pattern, data["n"]))
+            debugger(result)
+            self.flags_id = result
         except KeyError:
             self.flags_id = UNSET
         try:
@@ -140,82 +154,90 @@ class Ultra:
         except KeyError:
             self.time = UNSET
 
+    def print(self):
+        return self.operation, self.response, self.session_id, self.flags, self.flags_id, self.time
+
 
 def main():
-    # connecting by client
-    packet = Ultra(O=CONNECTING, f=(PUSH, SYN), n=100)
-    # debugger(packet)
-    ack_n = int(packet.flags_id[0]) + 1
+    # # connecting by client
+    # packet = Ultra(O=CONNECTING, f=(PUSH, SYN), n=100)
+    # # debugger(packet)
+    # ack_n = int(packet.flags_id[0]) + 1
+    #
+    # # ack connecting from server
+    # packet = Ultra(O=CONNECTING, f=(PUSH, ACK, SYN), n=(200,ack_n))
+    # # debugger(packet)
+    # ack_n = int(packet.flags_id[0]) + 1
+    #
+    # # give a session
+    # ses = 123456
+    # packet = Ultra(O=SESSION, I=ses, f=PUSH, n=(400, ack_n))
+    # # debugger(packet)
+    # ack_n = int(packet.flags_id[0]) + 1
+    #
+    # # ack
+    # packet = Ultra(O=SESSION, I=ses, f=ACK, n=(500, ack_n))
+    # # debugger(packet)
+    # ack_n = int(packet.flags_id[0]) + 1
+    #
+    # # send range
+    # packet = Ultra(O=RANGE, o=(100, 9000), I=ses, f=PUSH, n=(600, ack_n))
+    # # debugger(packet)
+    # ack_n = int(packet.flags_id[0]) + 1
+    #
+    # # ack
+    # packet = Ultra(O=RANGE, I=ses, f=ACK, n=(700, ack_n))
+    # # debugger(packet)
+    # ack_n = int(packet.flags_id[0]) + 1
+    #
+    # # guess number
+    # packet = Ultra(O=GUESS, o=500, I=ses, f=PUSH, n=(800, ack_n))
+    # # debugger(packet)
+    # ack_n = int(packet.flags_id[0]) + 1
+    #
+    # # ack
+    # packet = Ultra(O=GUESS, I=ses, f=ACK, n=(900, ack_n))
+    # # debugger(packet)
+    # ack_n = int(packet.flags_id[0]) + 1
+    #
+    # # send response
+    # packet = Ultra(O=RESPONSE, o='>', I=ses, f=PUSH, n=(1000, ack_n))
+    # # debugger(packet)
+    # ack_n = int(packet.flags_id[0]) + 1
+    #
+    # # ack
+    # packet = Ultra(O=RESPONSE, I=ses, f=ACK, n=(1100, ack_n))
+    # # debugger(packet)
+    # ack_n = int(packet.flags_id[0]) + 1
+    #
+    # # guess number
+    # packet = Ultra(O=GUESS, o=400, I=ses, f=PUSH, n=(1200, ack_n))
+    # # debugger(packet)
+    # ack_n = int(packet.flags_id[0]) + 1
+    #
+    # # ack
+    # packet = Ultra(O=GUESS, I=ses, f=ACK, n=(1300, ack_n))
+    # # debugger(packet)
+    # ack_n = int(packet.flags_id[0]) + 1
+    #
+    # # send response - who wins
+    # packet = Ultra(O=RESPONSE, o="You win/You loss", I=ses, f=PUSH, n=(1400, ack_n))
+    # # debugger(packet)
+    # ack_n = int(packet.flags_id[0]) + 1
 
-    # ack connecting from server
-    packet = Ultra(O=CONNECTING, f=(PUSH, ACK, SYN), n=(200,ack_n))
-    # debugger(packet)
-    ack_n = int(packet.flags_id[0]) + 1
-
-    # give a session
-    ses = 123456
-    packet = Ultra(O=SESSION, I=ses, f=PUSH, n=(400, ack_n))
-    # debugger(packet)
-    ack_n = int(packet.flags_id[0]) + 1
-
-    # ack
-    packet = Ultra(O=SESSION, I=ses, f=ACK, n=(500, ack_n))
-    # debugger(packet)
-    ack_n = int(packet.flags_id[0]) + 1
-
-    # send range
-    packet = Ultra(O=RANGE, o=(100, 9000), I=ses, f=PUSH, n=(600, ack_n))
-    # debugger(packet)
-    ack_n = int(packet.flags_id[0]) + 1
-
-    # ack
-    packet = Ultra(O=RANGE, I=ses, f=ACK, n=(700, ack_n))
-    # debugger(packet)
-    ack_n = int(packet.flags_id[0]) + 1
-
-    # guess number
-    packet = Ultra(O=GUESS, o=500, I=ses, f=PUSH, n=(800, ack_n))
-    # debugger(packet)
-    ack_n = int(packet.flags_id[0]) + 1
-
-    # ack
-    packet = Ultra(O=GUESS, I=ses, f=ACK, n=(900, ack_n))
-    # debugger(packet)
-    ack_n = int(packet.flags_id[0]) + 1
-
-    # send response
-    packet = Ultra(O=RESPONSE, o='>', I=ses, f=PUSH, n=(1000, ack_n))
-    # debugger(packet)
-    ack_n = int(packet.flags_id[0]) + 1
-
-    # ack
-    packet = Ultra(O=RESPONSE, I=ses, f=ACK, n=(1100, ack_n))
-    # debugger(packet)
-    ack_n = int(packet.flags_id[0]) + 1
-
-    # guess number
-    packet = Ultra(O=GUESS, o=400, I=ses, f=PUSH, n=(1200, ack_n))
-    # debugger(packet)
-    ack_n = int(packet.flags_id[0]) + 1
-
-    # ack
-    packet = Ultra(O=GUESS, I=ses, f=ACK, n=(1300, ack_n))
-    # debugger(packet)
-    ack_n = int(packet.flags_id[0]) + 1
-
-    # send response - who wins
-    packet = Ultra(O=RESPONSE, o="You win/You loss", I=ses, f=PUSH, n=(1400, ack_n))
-    # debugger(packet)
-    ack_n = int(packet.flags_id[0]) + 1
-
-    # ack
-    packet = Ultra(O=RESPONSE, I=ses, f=ACK, n=(1500, ack_n))
-    # debugger(packet)
-    ack_n = int(packet.flags_id[0]) + 1
+    # # ack
+    # ses = 123
+    # packet = Ultra(O=RESPONSE, I=ses, f=PU, n=(1500, ack_n))
+    # # debugger(packet)
+    # ack_n = int(packet.flags_id[0]) + 1
 
     print("@@@@@ parsing @@@@@")
-    packet.parse(str(Ultra(O=RESPONSE, I=ses, f=ACK, n=(1500, ack_n))))
-    print(packet)
+    packet = Ultra()
+    x = Ultra(O=RANGE, o=(500, 400), I=123456, f=(PUSH, ACK), n=(1400, 1401))
+    print(x.print())
+    print(packet, x)
+    packet.parse(str(x))
+    print(packet.print())
 
 
 if __name__ == "__main__":
