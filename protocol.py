@@ -28,7 +28,7 @@ def debugger(*msgs):
 
 
 class Ultra:
-    def __init__(self, O=UNSET, o=UNSET, I=UNSET, f=UNSET, n=UNSET):
+    def __init__(self, O=UNSET, o=UNSET, I=UNSET, f=UNSET, n=UNSET, t=UNSET):
         self.operation = O
 
         if type(o) is not tuple:
@@ -49,6 +49,7 @@ class Ultra:
         else:
             self.flags_id = n
 
+        self.time = t
     def __str__(self):
         result = str()
         debugger("O", self.operation)
@@ -87,6 +88,43 @@ class Ultra:
             result += "#\n"
         result += f"#t#$#{time.time()}#"
         return result
+
+    def parse2(self, data: str):
+        row_data = data.split("\n")
+        for i, el in enumerate(row_data):
+            debugger(i, el.split("#"))
+            el.split("#")
+            if el[1] == "O":
+                if el[2] != "$":
+                    debugger("brak zanku dolara" + el[2])
+            if el[1] == "o":
+                if el[2] != "$":
+                    debugger("brak zanku dolara" + el[2])
+
+            if el[1] == "I":
+                if el[2] != "$":
+                    debugger("brak zanku dolara" + el[2])
+            if el[1] == "f":
+                if el[2] != "$":
+                    debugger("brak zanku dolara" + el[2])
+
+            if el[1] == "n":
+                if el[2] != "$":
+                    debugger("brak zanku dolara" + el[2])
+                else:
+                    if el[3].cout(":") > 0:
+                        temp = el.split(":")
+                        if len(temp) > 3:
+                            print("err, too many flags")
+                        if len(temp) < 0:
+                            print("nie możliwe jest mieć mniej flag niż zero")
+                        else:
+                            temp = self.flags
+            if el[1] == "t":
+                if el[2] != "$":
+                    debugger("brak zanku dolara" + el[2])
+                else:
+                    el[3] = self.time
 
 
 def main():
@@ -160,6 +198,7 @@ def main():
     packet = Ultra(O=RESPONSE, I=ses, f=ACK, n=(1500, ack_n))
     debugger(packet)
     ack_n = int(packet.flags_id[0]) + 1
+
 
 
 if __name__ == "__main__":
