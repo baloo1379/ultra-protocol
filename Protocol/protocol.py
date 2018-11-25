@@ -3,7 +3,6 @@ import time
 
 DEBUG = True
 
-
 CONNECTING = 'connecting'
 RANGE = 'range'
 GUESS = 'guess'
@@ -17,6 +16,22 @@ ACK = 'ack'
 UNSET = "XXXXXXX"
 
 FIELDS = ('O', 'o', 'I', 'f', 'n', 't')
+
+'''
+Client initializes connection
+Server ack
+Server send session_id
+Client ack
+Server send (L1:L2)
+Client ack
+while (client hit):
+    Client send L
+    Server ack
+    Server response
+    client ack
+Server send result to all clients
+Clients ack
+'''
 
 
 def debugger(*msgs):
@@ -132,8 +147,8 @@ def main():
     # debugger(packet)
     ack_n = int(packet.flags_id[0]) + 1
 
-    # ack from server
-    packet = Ultra(O=CONNECTING, f=(ACK, SYN), n=(300, ack_n))
+    # ack connecting from server
+    packet = Ultra(O=CONNECTING, f=(PUSH, ACK, SYN), n=(200,ack_n))
     # debugger(packet)
     ack_n = int(packet.flags_id[0]) + 1
 
@@ -180,29 +195,27 @@ def main():
 
     # guess number
     packet = Ultra(O=GUESS, o=400, I=ses, f=PUSH, n=(1200, ack_n))
-    debugger(packet)
+    # debugger(packet)
     ack_n = int(packet.flags_id[0]) + 1
 
     # ack
     packet = Ultra(O=GUESS, I=ses, f=ACK, n=(1300, ack_n))
-    debugger(packet)
+    # debugger(packet)
     ack_n = int(packet.flags_id[0]) + 1
 
     # send response - who wins
     packet = Ultra(O=RESPONSE, o="You win/You loss", I=ses, f=PUSH, n=(1400, ack_n))
-    debugger(packet)
+    # debugger(packet)
     ack_n = int(packet.flags_id[0]) + 1
 
     # ack
     packet = Ultra(O=RESPONSE, I=ses, f=ACK, n=(1500, ack_n))
-    debugger(packet)
+    # debugger(packet)
     ack_n = int(packet.flags_id[0]) + 1
 
-    print("@@@@@ parsing @@@@@\n\n")
+    print("@@@@@ parsing @@@@@")
     packet.parse(str(Ultra(O=RESPONSE, I=ses, f=ACK, n=(1500, ack_n))))
-
-    print("@@@@@ parsing @@@@@\n\n")
-    packet.parse(str(Ultra(O=RESPONSE, I=ses, f=ACK, n=(1500, ack_n))))
+    print(packet)
 
 
 if __name__ == "__main__":
