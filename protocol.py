@@ -102,44 +102,34 @@ class Ultra:
             row = row[1:-1]
             row.remove("$")
             dic = {row[0]: row[1]}
-            row = dic
             data.update(dic)
             debugger(i, dic)
 
-            # if el[0] == "O":
-            #     if el[1] != "$":
-            #         debugger("brak zanku dolara" + el[1])
-            # if el[1] == "o":
-            #     if el[2] != "$":
-            #         debugger("brak zanku dolara" + el[2])
-            #
-            # if el[1] == "I":
-            #     if el[2] != "$":
-            #         debugger("brak zanku dolara" + el[2])
-            # if el[1] == "f":
-            #     if el[2] != "$":
-            #         debugger("brak zanku dolara" + el[2])
-            #
-            # if el[1] == "n":
-            #     if el[2] != "$":
-            #         debugger("brak zanku dolara" + el[2])
-            #     else:
-            #         if el[3].cout(":") > 0:
-            #             temp = el.split(":")
-            #             if len(temp) > 3:
-            #                 print("err, too many flags")
-            #             if len(temp) < 0:
-            #                 print("nie możliwe jest mieć mniej flag niż zero")
-            #             else:
-            #                 temp = self.flags
-            # if el[1] == "t":
-            #     if el[2] != "$":
-            #         debugger("brak zanku dolara" + el[2])
-            #     else:
-            #         el[3] = self.time
         debugger(data)
-
-
+        try:
+            self.operation = data["O"]
+        except KeyError:
+            self.operation = UNSET
+        try:
+            self.response = data["o"]
+        except KeyError:
+            self.response = UNSET
+        try:
+            self.flags = data["f"]
+        except KeyError:
+            self.flags = UNSET
+        try:
+            self.flags_id = data["n"]
+        except KeyError:
+            self.flags_id = UNSET
+        try:
+            self.session_id = data["I"]
+        except KeyError:
+            self.session_id = UNSET
+        try:
+            self.time = data["t"]
+        except KeyError:
+            self.time = UNSET
 def main():
     # connecting by client
     packet = Ultra(O=CONNECTING, f=(PUSH, SYN), n=100)
