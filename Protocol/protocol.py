@@ -103,7 +103,9 @@ class Ultra:
         result += f"#t#$#{self.time}#"
         return result
 
-    def parse(self, data: str):
+    @staticmethod
+    def parse(data: str):
+        packet = Ultra()
         row_data = data.split("\n")
         data = {}
         for el in row_data:
@@ -115,44 +117,45 @@ class Ultra:
             # debugger(i, dic)
         debugger(data)
         try:
-            self.operation = data["O"]
+            packet.operation = data["O"]
         except KeyError:
-            self.operation = UNSET
+            packet.operation = UNSET
         try:
             pattern1 = "\d+"
             pattern2 = "[=<>]"
             result = tuple(re.findall(pattern1, data["o"]))
             if result is not None:
                 debugger(result)
-                self.response = result
+                packet.response = result
             else:
                 result = tuple(re.findall(pattern2, data["o"]))
                 debugger(result)
-                self.response = result
+                packet.response = result
         except KeyError:
-            self.response = UNSET
+            packet.response = UNSET
         try:
             pattern = "\w+"
             result = tuple(re.findall(pattern, data["f"]))
             debugger(result)
-            self.flags = result
+            packet.flags = result
         except KeyError:
-            self.flags = UNSET
+            packet.flags = UNSET
         try:
             pattern = "\d+"
             result = tuple(re.findall(pattern, data["n"]))
             debugger(result)
-            self.flags_id = result
+            packet.flags_id = result
         except KeyError:
-            self.flags_id = UNSET
+            packet.flags_id = UNSET
         try:
-            self.session_id = data["I"]
+            packet.session_id = data["I"]
         except KeyError:
-            self.session_id = UNSET
+            packet.session_id = UNSET
         try:
-            self.time = data["t"]
+            packet.time = data["t"]
         except KeyError:
-            self.time = UNSET
+            packet.time = UNSET
+        return packet
 
     def print(self):
         return self.operation, self.response, self.session_id, self.flags, self.flags_id, self.time
