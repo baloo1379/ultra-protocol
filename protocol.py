@@ -28,7 +28,7 @@ def debugger(*msgs):
 
 
 class Ultra:
-    def __init__(self, O=UNSET, o=UNSET, I=UNSET, f=UNSET, n=UNSET, t=UNSET):
+    def __init__(self, O=UNSET, o=UNSET, I=UNSET, f=UNSET, n=UNSET, t=time.time()):
         self.operation = O
 
         if type(o) is not tuple:
@@ -48,8 +48,8 @@ class Ultra:
             self.flags_id = n,
         else:
             self.flags_id = n
-
         self.time = t
+
     def __str__(self):
         result = str()
         debugger("O", self.operation)
@@ -86,45 +86,58 @@ class Ultra:
                 if i < len(self.flags_id) - 1:
                     result += ":"
             result += "#\n"
-        result += f"#t#$#{time.time()}#"
+        result += f"#t#$#{self.time}#"
         return result
+
+    def parse(self, data: str):
+        row_data = data.split("\n")
+        for i, el in enumerate(row_data):
+            debugger(i, el.split("#")),
 
     def parse2(self, data: str):
         row_data = data.split("\n")
+        data = {}
         for i, el in enumerate(row_data):
-            debugger(i, el.split("#"))
-            el.split("#")
-            if el[1] == "O":
-                if el[2] != "$":
-                    debugger("brak zanku dolara" + el[2])
-            if el[1] == "o":
-                if el[2] != "$":
-                    debugger("brak zanku dolara" + el[2])
+            row = el.split("#")
+            row = row[1:-1]
+            row.remove("$")
+            dic = {row[0]: row[1]}
+            row = dic
+            data.update(dic)
+            debugger(i, dic)
 
-            if el[1] == "I":
-                if el[2] != "$":
-                    debugger("brak zanku dolara" + el[2])
-            if el[1] == "f":
-                if el[2] != "$":
-                    debugger("brak zanku dolara" + el[2])
-
-            if el[1] == "n":
-                if el[2] != "$":
-                    debugger("brak zanku dolara" + el[2])
-                else:
-                    if el[3].cout(":") > 0:
-                        temp = el.split(":")
-                        if len(temp) > 3:
-                            print("err, too many flags")
-                        if len(temp) < 0:
-                            print("nie możliwe jest mieć mniej flag niż zero")
-                        else:
-                            temp = self.flags
-            if el[1] == "t":
-                if el[2] != "$":
-                    debugger("brak zanku dolara" + el[2])
-                else:
-                    el[3] = self.time
+            # if el[0] == "O":
+            #     if el[1] != "$":
+            #         debugger("brak zanku dolara" + el[1])
+            # if el[1] == "o":
+            #     if el[2] != "$":
+            #         debugger("brak zanku dolara" + el[2])
+            #
+            # if el[1] == "I":
+            #     if el[2] != "$":
+            #         debugger("brak zanku dolara" + el[2])
+            # if el[1] == "f":
+            #     if el[2] != "$":
+            #         debugger("brak zanku dolara" + el[2])
+            #
+            # if el[1] == "n":
+            #     if el[2] != "$":
+            #         debugger("brak zanku dolara" + el[2])
+            #     else:
+            #         if el[3].cout(":") > 0:
+            #             temp = el.split(":")
+            #             if len(temp) > 3:
+            #                 print("err, too many flags")
+            #             if len(temp) < 0:
+            #                 print("nie możliwe jest mieć mniej flag niż zero")
+            #             else:
+            #                 temp = self.flags
+            # if el[1] == "t":
+            #     if el[2] != "$":
+            #         debugger("brak zanku dolara" + el[2])
+            #     else:
+            #         el[3] = self.time
+        debugger(data)
 
 
 def main():
@@ -199,6 +212,11 @@ def main():
     debugger(packet)
     ack_n = int(packet.flags_id[0]) + 1
 
+    print("@@@@@ parsing @@@@@\n\n")
+    packet.parse(str(Ultra(O=RESPONSE, I=ses, f=ACK, n=(1500, ack_n))))
+
+    print("@@@@@ parsing @@@@@\n\n")
+    packet.parse2(str(Ultra(O=RESPONSE, I=ses, f=ACK, n=(1500, ack_n))))
 
 
 if __name__ == "__main__":
