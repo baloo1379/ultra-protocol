@@ -1,9 +1,7 @@
-import socket
 import socketserver
 import threading
-import sys
-from protocol import *
-from Utils import utils
+import Protocol
+import Utils
 
 
 class ThreadedUDPHandler(socketserver.BaseRequestHandler):

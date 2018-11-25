@@ -1,7 +1,7 @@
 import socket
 import sys
-from protocol import *
-from Utils import utils
+import Utils
+import Protocol
 
 HOST, PORT = "localhost", 9999
 data = input("message to send")
