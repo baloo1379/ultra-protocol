@@ -133,7 +133,7 @@ def main():
     ack_n = int(packet.flags_id[0]) + 1
 
     # ack from server
-    packet = Ultra(O=CONNECTING, f=(ACK, SYN), n=(300, ack_n))
+    packet = Ultra(O=CONNECTING, f=(PUSH, ACK, SYN), n=(ack_n))
     # debugger(packet)
     ack_n = int(packet.flags_id[0]) + 1
 
