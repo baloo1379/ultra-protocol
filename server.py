@@ -1,91 +1,158 @@
 import socketserver
 import threading
+import socket
 from random import randrange
-import Protocol.protocol as proto
-import Utils.utils as u
+from Protocol.protocol import *
+from Utils.utils import debugger, str_padded
+
+
+def user_exists(s_id: int):
+    try:
+        clients_list[s_id]
+    except KeyError as err:
+        # client don't exists
+        debugger("client don't exists", err)
+        return False
+    else:
+        return True
+
+
+def check_ack(s_id: int, ack: int):
+    try:
+        c_ack = clients_list[s_id]
+    except KeyError as err:
+        # client don't exists
+        debugger("client don't exists", err)
+        return False
+    else:
+        if c_ack == ack-1:
+            return True
+        else:
+            return False
+
+
+def send(s: socket, response: Ultra, address: tuple):
+        print("prepared response:".upper())
+        print(response.print())
+        response = bytes(str(response.pack()), 'ascii')
+        s.sendto(response, address)
 
 
 class ThreadedUDPHandler(socketserver.BaseRequestHandler):
-
     def handle(self):
-        global clients, clients_ip, range_for_clients
-        u.debugger("clients list:", clients)
-        u.debugger("Handle entered")
-        data = str(self.request[0], "ascii")
+        debugger("--- Handle entered ---")
+        global clients_list, clients_ip_list, range_for_clients, target_for_clients
+        client_address = self.client_address
+        raw_data = str(self.request[0], "ascii")
         cur_thread = threading.current_thread()
-        u.debugger("on {} {} wrote:".format(cur_thread.name, self.client_address[0]))
-        ack = 0
-        prev_ack = 0
-        send = False
-        client_address = ("0.0.0.0", 0)
         try:
-            query = proto.Ultra.parse(data)
+            data = Ultra.parse(raw_data)
         except ValueError as err:
             print(err)
         else:
-            print(query)
-            response = proto.Ultra()
-            u.debugger(query.flags)
-            if query.flags == (proto.PUSH, proto.SYN):
-                # first connect packet from client
+            debugger(f"on {cur_thread.name} {client_address[0]} wrote:")
+            print("RECV DATA:")
+            print(data.print())
+
+            # recognizing by flags
+            if data.flags == (PUSH, SYN):
+                # first connect from client
+
+                # creating session_id ,push_id, and calculate ack
                 current_session_id = randrange(0, 1024)
+                debugger("created session_id", current_session_id)
                 push = randrange(0, 1024)
-                ack = int(query.flags_id[0]) + 1
+                ack = data.flags_id + 1
+
+                # saving session_id with ip_address and lat push_id
                 client_address = self.client_address
-                clients.append([current_session_id, push])
-                clients_ip.update({current_session_id: client_address})
-                u.debugger("connecting", current_session_id, ack)
-                response = proto.Ultra(O=query.operation, I=current_session_id, f=(proto.PUSH, proto.ACK, proto.SYN),
-                                       n=(push, ack))
-                send = True
-            if query.flags == (proto.ACK, proto.SYN):
+                clients_list.update({current_session_id: push})
+                clients_ip_list.update({current_session_id: client_address})
+
+                response = Ultra(O=data.operation, I=current_session_id, f=(PUSH, ACK, SYN), n=(push, ack))
+                send(self.request[1], response, client_address)
+
+            if data.flags == (ACK, SYN):
                 # ack of connection
-                send = False
-                client_session_id = int(query.session_id)
-                ack = int(query.flags_id[0])
-                u.debugger(client_session_id, ack)
-                try:
-                    i = clients.index([client_session_id, ack-1])
-                    clients.remove([client_session_id, ack-1])
-                except ValueError as err:
-                    # client don't exists
-                    u.debugger("client don't exists")
-
+                # checking recv session_id and ack
+                client_session_id = data.session_id
+                ack = data.flags_id
+                if not user_exists(client_session_id):
+                    debugger("wrong session_id", client_session_id)
+                    return
                 else:
-                    u.debugger("client exists and ack ok", i)
-                    print("CONNECTED")
-                    push = randrange(0, 1024)
-                    clients.append([client_session_id, push])
-                    # preparing range packet
-                    response = proto.Ultra(O=proto.RANGE, o=range_for_clients, I=client_session_id, f=proto.PUSH, n=push)
-                    send = True
-                    client_address = clients_ip[client_session_id]
+                    if not check_ack(client_session_id, ack):
+                        debugger("wrong ack", ack)
+                        return
+                    else:
+                        debugger("client exists and ack ok")
+                        print("CONNECTED")
+                        push = randrange(0, 1024)
+                        clients_list.update({client_session_id: push})
+                        # preparing range packet
+                        response = Ultra(O=RANGE, o=range_for_clients, I=client_session_id, f=PUSH, n=push)
+                        client_address = clients_ip_list[client_session_id]
+                        send(self.request[1], response, client_address)
 
-            if query.flags == proto.ACK:
-                # TODO
-                # utworzyć dalej ack i inne możliwości pakietów od klienta
-
+            if data.flags == ACK:
+                debugger("Entered ACK")
                 # ack of range
-                client_session_id = int(query.session_id)
-                ack = int(query.flags_id[0])
-                u.debugger(client_session_id, ack)
-                try:
-                    i = clients.index([client_session_id, ack-1])
-                    # clients.remove([client_session_id, ack-1])
-                except ValueError as err:
-                    # client don't exists
-                    u.debugger("client don't exists")
+                client_session_id = int(data.session_id)
+                ack = data.flags_id
+                debugger(client_session_id, ack)
+                if not user_exists(client_session_id):
+                    debugger("client don't exists")
+                    return
                 else:
-                    u.debugger("client exists and ack ok", i)
+                    if not check_ack(client_session_id, ack):
+                        debugger("wrong ack", ack)
+                        return
+                    else:
+                        debugger("client exists and ack ok")
                 # ack of response
 
-            if send:
-                s = self.request[1]
-                u.debugger("prepared response: ", response)
-                response = bytes(str(response), 'ascii')
-                s.sendto(response, client_address)
+            if data.flags == PUSH:
+                # guess
+                client_session_id = int(data.session_id)
+                ack = data.flags_id
+                if not user_exists(client_session_id):
+                    return
+                else:
+                    # send ack
+                    try:
+                        client_address = clients_ip_list[client_session_id]
+                    except KeyError as err:
+                        debugger(err)
+                        return
+                    else:
+                        response = Ultra(O=data.operation, I=client_session_id, f=ACK, n=ack+1)
+                        send(self.request[1], response, client_address)
+
+                        # send response
+                        number = int(data.response)
+                        if number == target_for_clients:
+                            # hit - koniec gry
+                            sign = "="
+                        else:
+                            if number < target_for_clients:
+                                # send <
+                                sign = "<"
+                            else:
+                                # send >
+                                sign = ">"
+                        push = randrange(0, 1024)
+                        clients_list.update({client_session_id: push})
+                        response = Ultra(O=data.operation, o=sign, I=client_session_id, f=PUSH, n=push)
+                        send(self.request[1], response, client_address)
+
         finally:
-            u.debugger("Handle exited")
+            debugger("=== Handle exited ===", "\n")
+
+    def finish(self):
+        print("===== Tables ======")
+        print(clients_list)
+        print(clients_ip_list)
+        print("===================", "\n")
 
 
 class ThreadedUDPServer(socketserver.ThreadingMixIn, socketserver.UDPServer):
@@ -94,14 +161,22 @@ class ThreadedUDPServer(socketserver.ThreadingMixIn, socketserver.UDPServer):
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 9999
-    clients = [0, 0]
-    clients_ip = {0: ("127.0.0.1", 9999)}
-    range_for_clients = (randrange(0, 1024), randrange(0, 1024))
+    clients_list = {}
+    clients_ip_list = {}
+    a = randrange(0,512)
+    b = randrange(513, 1024)
+    target_for_clients = randrange(a, b)
+    range_for_clients = (a, b)
+    print("Target:", target_for_clients)
+    print("Range:", range_for_clients)
+
+    # starting multithread server
     server = ThreadedUDPServer((HOST, PORT), ThreadedUDPHandler)
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.daemon = True
     server_thread.start()
     print("Server loop running in thread:", server_thread.name)
+    print()
     server.serve_forever()
     server.shutdown()
     server.server_close()
