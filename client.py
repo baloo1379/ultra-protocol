@@ -1,43 +1,50 @@
 import socket
-import sys
 import random
 import Protocol.protocol as proto
-HOST, PORT = "localhost", 9999
-data = input("message to send")
-basic = proto.Ultra()
+import Utils.utils as u
 
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-packet = proto.Ultra(O=proto.CONNECTING, f=(proto.PUSH, proto.SYN), n = random.randrange(0,2000))
-ack_n = int(packet.flags_id[0]) + 1
-packet = str(packet)
-sock.sendto(bytes(packet, "ascii"), (HOST, PORT))
+HOST, PORT = "localhost", 9998
 
 
+def client():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind((HOST, 9999))
 
-rec = proto.Ultra()
-received = sock.recv(1024)
-received = str(received, "ascii")
-rec.parse(received)
-basic.session_id = rec.session_id
+    # connecting
+    packet = proto.Ultra(O=proto.CONNECTING, f=(proto.PUSH, proto.SYN), n=random.randrange(0, 2048))
+    ack_n = int(packet.flags_id[0]) + 1
+    print(packet)
+    sock.sendto(bytes(str(packet), "ascii"), (HOST, PORT))
 
-if rec.proto.ACK == ack_n:
-    resend = proto.Ultra(O=proto.CONNECTING, f=(proto.ACK, proto.SYN), n=ack_n)
-    resend = str(resend)
-    sock.sendto(bytes(resend, "ascii"), (HOST, PORT))
+    # recv ack and session_id of connecting
+    received = sock.recv(1024)
+    response = proto.Ultra.parse(str(received, "ascii"))
+    print(response)
+    if int(response.flags_id[1]) != ack_n:
+        print("Wrong ack. Quiting")
+        u.debugger(response.flags_id[1], ack_n)
+        return
+    else:
+        # sending ack of connection
+        session_id = response.session_id
+        u.debugger("session_id", session_id)
+        query = proto.Ultra(O=proto.CONNECTING, I=session_id, f=(proto.ACK, proto.SYN), n=int(response.flags_id[0])+1)
+        sock.sendto(bytes(str(query), "ascii"), (HOST, PORT))
 
-#while
-    range1 = proto.Ultra()
-    range = sock.recv(1024)
-    range = str(range, "ascii")
-    range1 = range1.parse(range)
+        # recv of range
+        received = sock.recv(1024)
+        received = str(received, "ascii")
+        received = proto.Ultra.parse(received)
+        print(received)
 
-else:
-    print("received ack is different than expected cannot connect")
+        # ack of recv range
+        query = proto.Ultra(O=received.operation, I=session_id, f=proto.ACK, n=int(response.flags_id[0]) + 1)
+        sock.sendto(bytes(str(query), "ascii"), (HOST, PORT))
+
+        #while
+            # first guess
 
 
-
-print("Sent:     {}".format(data))
-print("Received: {}".format(received))
-sys.exit()
+if __name__ == "__main__":
+    client()
