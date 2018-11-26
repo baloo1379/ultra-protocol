@@ -52,17 +52,32 @@ class ThreadedUDPHandler(socketserver.BaseRequestHandler):
                     u.debugger("client don't exists")
 
                 else:
-                    u.debugger("client exists and ack ok")
+                    u.debugger("client exists and ack ok", i)
                     print("CONNECTED")
                     push = randrange(0, 1024)
                     clients.append([client_session_id, push])
+                    # preparing range packet
                     response = proto.Ultra(O=proto.RANGE, o=range_for_clients, I=client_session_id, f=proto.PUSH, n=push)
                     send = True
                     client_address = clients_ip[client_session_id]
+
             if query.flags == proto.ACK:
                 # TODO
                 # utworzyć dalej ack i inne możliwości pakietów od klienta
-                pass
+
+                # ack of range
+                client_session_id = int(query.session_id)
+                ack = int(query.flags_id[0])
+                u.debugger(client_session_id, ack)
+                try:
+                    i = clients.index([client_session_id, ack-1])
+                    # clients.remove([client_session_id, ack-1])
+                except ValueError as err:
+                    # client don't exists
+                    u.debugger("client don't exists")
+                else:
+                    u.debugger("client exists and ack ok", i)
+                # ack of response
 
             if send:
                 s = self.request[1]
