@@ -1,5 +1,5 @@
-DEBUG = False
-padding = 20
+DEBUG = True
+padding = 15
 
 
 def debugger(*msgs):
