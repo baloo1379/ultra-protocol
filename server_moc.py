@@ -45,7 +45,7 @@ def server():
 
     # fifth
     # tu takie bloki sobie rób odbioru i wysyłki i dostosuj jak potrzebujesz.
-    # na razie nie rób tu logiki, że sprawdzanie ack itd, jedynie weź wklej linijkę 17 (ack)
+    # na razie nie rób tu logiki, że sprawdzanie ack itd, jedynie weź wklej linijkę 22 (ack)
     # żeby serwer dobre ack ci odsyłał jak w cliencie będziesz sprawdzał
     data = s.recv(1024)
     query = proto.Ultra.parse(data.decode("ascii"))

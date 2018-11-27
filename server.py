@@ -167,7 +167,7 @@ class ThreadedClose(threading.Thread):
 
 
 if __name__ == "__main__":
-    HOST, PORT = "192.168.1.101", 9999
+    HOST, PORT = "localhost", 9999
     clients_list = {}
     clients_ip_list = {}
     a = randrange(0, 512)
