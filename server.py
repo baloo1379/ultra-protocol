@@ -32,8 +32,8 @@ def check_ack(s_id: int, ack: int):
 
 
 def send(s: socket, response: Ultra, address: tuple):
-    print("prepared response:".upper())
-    print(response.print())
+    debugger("prepared response:".upper())
+    debugger(response.print())
     response = bytes(str(response.pack()), 'ascii')
     s.sendto(response, address)
 
@@ -48,11 +48,11 @@ class ThreadedUDPHandler(socketserver.BaseRequestHandler):
         try:
             data = Ultra.parse(raw_data)
         except ValueError as err:
-            print("parsing error:", err)
+            debugger("parsing error:", err)
         else:
             debugger(f"on {cur_thread.name} {client_address[0]} wrote:")
-            print("RECV DATA:")
-            print(data.print())
+            debugger("RECV DATA:")
+            debugger(data.print())
 
             # recognizing by flags
             if data.flags == (PUSH, SYN):
@@ -86,7 +86,7 @@ class ThreadedUDPHandler(socketserver.BaseRequestHandler):
                         return
                     else:
                         debugger("client exists and ack ok")
-                        print("CONNECTED")
+                        print("CONNECTED WITH", client_session_id)
                         push = randrange(0, 1024)
                         clients_list.update({client_session_id: push})
                         # preparing range packet
@@ -144,10 +144,10 @@ class ThreadedUDPHandler(socketserver.BaseRequestHandler):
             debugger("=== Handle exited ===", "\n")
 
     def finish(self):
-        print("===== Tables ======")
-        print(clients_list)
-        print(clients_ip_list)
-        print("===================", "\n")
+        debugger("===== Tables ======")
+        debugger(clients_list)
+        debugger(clients_ip_list)
+        debugger("===================", "\n")
 
 
 class ThreadedUDPServer(socketserver.ThreadingMixIn, socketserver.UDPServer):
