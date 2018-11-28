@@ -1,6 +1,7 @@
 import socketserver
 import threading
 import socket
+import sys
 from random import randrange
 from Protocol.protocol import *
 from Utils.utils import debugger
@@ -168,6 +169,11 @@ class ThreadedClose(threading.Thread):
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 9999
+
+    args = sys.argv
+    host = args[1] if len(args) > 1 else HOST
+    port = int(args[2]) if len(args) > 2 else PORT
+
     clients_list = {}
     clients_ip_list = {}
     a = randrange(0, 512)
@@ -178,7 +184,7 @@ if __name__ == "__main__":
     print("Range:", range_for_clients)
 
     # starting multithread server
-    server = ThreadedUDPServer((HOST, PORT), ThreadedUDPHandler)
+    server = ThreadedUDPServer((host, port), ThreadedUDPHandler)
     server_thread = threading.Thread(target=server.serve_forever)
     close_thread = ThreadedClose(server)
 
@@ -187,7 +193,9 @@ if __name__ == "__main__":
     server_thread.start()
     close_thread.start()
 
+    print("Server IP: ", server.server_address[0], "at port", server.server_address[1])
     print("Server loop running in thread:", server_thread.name)
+
     server.serve_forever()
 
     print("Server closed")

@@ -88,6 +88,5 @@ def client():
             sock.sendto(bytes(str(send_ack), "ascii"), (HOST,PORT))
 
 
-
 if __name__ == "__main__":
     client()
