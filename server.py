@@ -35,7 +35,7 @@ def check_ack(s_id: int, ack: int):
 def send(s: socket, response: Ultra, address: tuple):
     debugger("prepared response:".upper())
     debugger(response.print())
-    response = bytes(str(response.pack()), 'ascii')
+    response = bytes(response.pack(), 'ascii')
     s.sendto(response, address)
 
 
