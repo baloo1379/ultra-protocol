@@ -46,17 +46,22 @@ def client():
         debugger("S", query.print())
         sock.sendto(bytes(str(query), "ascii"), (HOST, PORT))
         ac_flag = int(response.flags_id[1])
+        print("Server drew number from range ", range)
 
         # connected and range obtained
         w_flag = True
         while(w_flag == True):
                 # first guess
-            print("Server drew number from range ", range)
             st_guess = input()
-            push = random.randrange(0, 1024)
-            send_guess = Ultra(O=GUESS, o=st_guess, I=session_id , f= PUSH, n=push)
-            sock.sendto(bytes(str(send_guess), "ascii"), (HOST, PORT))
-            debugger(send_guess.print())
+
+            if st_guess > range[0] and st_guess < range[1]:
+                push = random.randrange(0, 1024)
+                send_guess = Ultra(O=GUESS, o=st_guess, I=session_id , f= PUSH, n=push)
+                sock.sendto(bytes(str(send_guess), "ascii"), (HOST, PORT))
+                debugger(send_guess.print())
+            else:
+                print("given number is not from range")
+                continue
             #recv ack
 
             data = sock.recv(1024)
@@ -66,6 +71,7 @@ def client():
                 debugger("otrzymałem poprawnego ack")
             else:
                 debugger("niepoprawny ack")
+
 
 
             #recv answer
