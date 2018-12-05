@@ -5,9 +5,9 @@ from Protocol.protocol import *
 from Utils.utils import debugger
 
 
-def client(host, port, client_port):
+def client(host, port, c_ip, client_port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((host, client_port))
+    sock.bind((c_ip, client_port))
     server_adddress = (host, port)
 
     # connecting
@@ -100,6 +100,7 @@ if __name__ == "__main__":
     args = sys.argv
     host = args[1] if len(args) > 1 else HOST
     port = int(args[2]) if len(args) > 2 else PORT
-    client_port = int(args[3]) if len(args) > 3 else PORT-1
+    client_addr = args[3] if len(args) > 3 else HOST
+    client_port = int(args[4]) if len(args) > 4 else PORT-1
 
-    client(host, port, client_port)
+    client(host, port, client_addr, client_port)

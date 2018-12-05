@@ -7,6 +7,11 @@ from Protocol.protocol import *
 from Utils.utils import debugger
 
 
+DEBUG = True
+CURSOR_UP_ONE = '\x1b[1A'
+ERASE_LINE = '\x1b[2K'
+
+
 def user_exists(s_id: int):
     try:
         clients_list[s_id]
@@ -42,7 +47,8 @@ def send(s: socket, response: Ultra, address: tuple):
 class ThreadedUDPHandler(socketserver.BaseRequestHandler):
     def handle(self):
         debugger("--- Handle entered ---")
-        global clients_list, clients_ip_list, range_for_clients, target_for_clients
+        global clients_list, clients_state_list, range_for_clients, target_for_clients, waiting_for_players, players, \
+            won_player, game_end
         client_address = self.client_address
         raw_data = str(self.request[0], "ascii")
         cur_thread = threading.current_thread()
@@ -58,20 +64,26 @@ class ThreadedUDPHandler(socketserver.BaseRequestHandler):
             # recognizing by flags
             if data.flags == (PUSH, SYN):
                 # first connect from client
+                if waiting_for_players:
+                    # creating session_id ,push_id, and calculate ack
+                    current_session_id = randrange(0, 1024)
+                    debugger("created session_id", current_session_id)
+                    push = randrange(0, 1024)
+                    ack = data.flags_id + 1
 
-                # creating session_id ,push_id, and calculate ack
-                current_session_id = randrange(0, 1024)
-                debugger("created session_id", current_session_id)
-                push = randrange(0, 1024)
-                ack = data.flags_id + 1
+                    # saving session_id with ip_address and lat push_id
+                    client_address = self.client_address
+                    clients_list.update({current_session_id: push})
+                    # clients_state_list.update({current_session_id: CONNECTING})
 
-                # saving session_id with ip_address and lat push_id
-                # client_address = self.client_address
-                clients_list.update({current_session_id: push})
-                clients_ip_list.update({current_session_id: client_address})
-
-                response = Ultra(O=data.operation, I=current_session_id, f=(PUSH, ACK, SYN), n=(push, ack))
-                send(self.request[1], response, client_address)
+                    response = Ultra(O=data.operation, o=players, I=current_session_id, f=(PUSH, ACK, SYN), n=(push, ack))
+                    send(self.request[1], response, client_address)
+                else:
+                    #too late
+                    push = randrange(0, 1024)
+                    ack = data.flags_id + 1
+                    response = Ultra(O=data.operation, o="rejected", f=(PUSH, ACK, SYN), n=(push, ack))
+                    send(self.request[1], response, client_address)
 
             if data.flags == (ACK, SYN):
                 # ack of connection
@@ -88,11 +100,13 @@ class ThreadedUDPHandler(socketserver.BaseRequestHandler):
                     else:
                         debugger("client exists and ack ok")
                         print("CONNECTED WITH", client_session_id)
+                        players += 1
                         push = randrange(0, 1024)
                         clients_list.update({client_session_id: push})
                         # preparing range packet
+                        while waiting_for_players:
+                            pass
                         response = Ultra(O=RANGE, o=range_for_clients, I=client_session_id, f=PUSH, n=push)
-                        client_address = clients_ip_list[client_session_id]
                         send(self.request[1], response, client_address)
 
             if data.flags == ACK:
@@ -125,17 +139,24 @@ class ThreadedUDPHandler(socketserver.BaseRequestHandler):
 
                     # send response
                     number = int(data.response)
-                    if number == target_for_clients:
-                        # hit - koniec gry
-                        sign = "="
-                    else:
-                        if number < target_for_clients:
-                            # send <
-                            sign = "<"
+                    if not game_end:
+                        if number == target_for_clients:
+                            # hit - koniec gry
+                            game_end = True
+                            sign = "win"
+                            won_player = client_session_id
+                            print("Player", client_session_id, "won")
                         else:
-                            # send >
+                            if number < target_for_clients:
+                                # send <
+                                sign = "<"
+                            else:
+                                # send >
 
-                            sign = ">"
+                                sign = ">"
+                    else:
+                        sign = "lose:"+str(won_player)
+
                     push = randrange(0, 1024)
                     clients_list.update({client_session_id: push})
                     response = Ultra(O=data.operation, o=sign, I=client_session_id, f=PUSH, n=push)
@@ -147,12 +168,12 @@ class ThreadedUDPHandler(socketserver.BaseRequestHandler):
     def finish(self):
         debugger("===== Tables ======")
         debugger(clients_list)
-        debugger(clients_ip_list)
+        debugger(clients_state_list)
         debugger("===================", "\n")
 
 
 class ThreadedUDPServer(socketserver.ThreadingMixIn, socketserver.UDPServer):
-    pass
+    daemon_threads = True
 
 
 class ThreadedClose(threading.Thread):
@@ -167,6 +188,23 @@ class ThreadedClose(threading.Thread):
             self.s.shutdown()
 
 
+class GameStart(threading.Thread):
+
+    def run(self):
+        global waiting_for_players
+        debugger("GameStart thread\n")
+        # print("Time to close room:")
+        el = 0
+        while True:
+            # print(10-el, "s ", end="\r")
+            time.sleep(1)
+            if el >= 10:
+                print("Time is up. Room closed")
+                waiting_for_players = False
+                return
+            el += 1
+
+
 if __name__ == "__main__":
     HOST, PORT = "localhost", 9999
 
@@ -175,11 +213,16 @@ if __name__ == "__main__":
     port = int(args[2]) if len(args) > 2 else PORT
 
     clients_list = {}
-    clients_ip_list = {}
+    clients_state_list = {}
     a = randrange(0, 512)
     b = randrange(513, 1024)
     target_for_clients = randrange(a, b)
     range_for_clients = (a, b)
+    connect_time = 10
+    waiting_for_players = True
+    players = 0
+    won_player = 0
+    game_end = False
     print("Target:", target_for_clients)
     print("Range:", range_for_clients)
 
@@ -187,14 +230,20 @@ if __name__ == "__main__":
     server = ThreadedUDPServer((host, port), ThreadedUDPHandler)
     server_thread = threading.Thread(target=server.serve_forever)
     close_thread = ThreadedClose(server)
+    connecting_thread = GameStart()
 
     server_thread.daemon = True
     close_thread.daemon = True
-    server_thread.start()
-    close_thread.start()
+    connecting_thread.daemon = True
 
+    server_thread.start()
     print("Server IP: ", server.server_address[0], "at port", server.server_address[1])
     print("Server loop running in thread:", server_thread.name)
+
+    close_thread.start()
+
+    print("Clients have 10 seconds to connect")
+    connecting_thread.start()
 
     server.serve_forever()
 

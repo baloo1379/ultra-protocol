@@ -13,7 +13,7 @@ PUSH = 'push'
 SYN = 'syn'
 ACK = 'ack'
 
-UNSET = "XXXXXXX"
+UNSET = "empty"
 
 FIELDS = ('O', 'o', 'I', 'f', 'n', 't')
 
@@ -53,116 +53,115 @@ class Ultra:
 
     def __str__(self):
         result = str()
-        # debugger("O", self.operation)
-        if self.operation is not UNSET:
-            result += f"#O#$#{self.operation}#\n"
 
-        if self.response is not UNSET:
-            result += "#o#$#"
-            if type(self.response) is str:
-                result += self.response
-            elif type(self.response) is int:
-                result += str(self.response)
-            elif type(self.response) is tuple:
-                for i, el in enumerate(self.response):
-                    result += str(el)
-                    if i < len(self.response) - 1:
-                        result += ":"
-            result += "#\n"
+        result += f"#O#$#{self.operation}#"
 
-        if self.session_id is not UNSET:
-            result += f"#I#$#{self.session_id}#\n"
+        result += "#o#$#"
+        if type(self.response) is str:
+            result += self.response
+        elif type(self.response) is int:
+            result += str(self.response)
+        elif type(self.response) is tuple:
+            for i, el in enumerate(self.response):
+                result += str(el)
+                if i < len(self.response) - 1:
+                    result += ":"
+        result += "#"
 
-        if self.flags is not UNSET:
-            result += "#f#$#"
-            if type(self.flags) is str:
-                result += self.flags
-            elif type(self.flags) is tuple:
-                for i, el in enumerate(self.flags):
-                    result += el
-                    if i < len(self.flags) - 1:
-                        result += ":"
-            result += "#\n"
+        result += f"#I#$#{self.session_id}#"
 
-        if self.flags_id is not UNSET:
-            result += "#n#$#"
-            if type(self.flags_id) is int:
-                result += str(self.flags_id)
-            elif type(self.flags_id) is tuple:
-                for i, el in enumerate(self.flags_id):
-                    result += str(el)
-                    if i < len(self.flags_id) - 1:
-                        result += ":"
-            result += "#\n"
+        result += "#f#$#"
+        if type(self.flags) is str:
+            result += self.flags
+        elif type(self.flags) is tuple:
+            for i, el in enumerate(self.flags):
+                result += el
+                if i < len(self.flags) - 1:
+                    result += ":"
+        result += "#"
+
+        result += "#n#$#"
+        if type(self.flags_id) is int:
+            result += str(self.flags_id)
+        elif type(self.flags_id) is tuple:
+            for i, el in enumerate(self.flags_id):
+                result += str(el)
+                if i < len(self.flags_id) - 1:
+                    result += ":"
+        result += "#"
+
         result += f"#t#$#{self.time}#"
+
         return result
 
     def pack(self):
         result = str()
-        # debugger("O", self.operation)
-        if self.operation is not UNSET:
-            result += f"#O#$#{self.operation}#\n"
 
-        if self.response is not UNSET:
-            result += "#o#$#"
-            if type(self.response) is str:
-                result += self.response
-            elif type(self.response) is int:
-                result += str(self.response)
-            elif type(self.response) is tuple:
-                for i, el in enumerate(self.response):
-                    result += str(el)
-                    if i < len(self.response) - 1:
-                        result += ":"
-            result += "#\n"
+        result += f"#O#$#{self.operation}#"
 
-        if self.session_id is not UNSET:
-            result += f"#I#$#{self.session_id}#\n"
+        result += "#o#$#"
+        if type(self.response) is str:
+            result += self.response
+        elif type(self.response) is int:
+            result += str(self.response)
+        elif type(self.response) is tuple:
+            for i, el in enumerate(self.response):
+                result += str(el)
+                if i < len(self.response) - 1:
+                    result += ":"
+        result += "#"
 
-        if self.flags is not UNSET:
-            result += "#f#$#"
-            if type(self.flags) is str:
-                result += self.flags
-            elif type(self.flags) is tuple:
-                for i, el in enumerate(self.flags):
-                    result += el
-                    if i < len(self.flags) - 1:
-                        result += ":"
-            result += "#\n"
+        result += f"#I#$#{self.session_id}#"
 
-        if self.flags_id is not UNSET:
-            result += "#n#$#"
-            if type(self.flags_id) is int:
-                result += str(self.flags_id)
-            elif type(self.flags_id) is tuple:
-                for i, el in enumerate(self.flags_id):
-                    result += str(el)
-                    if i < len(self.flags_id) - 1:
-                        result += ":"
-            result += "#\n"
+        result += "#f#$#"
+        if type(self.flags) is str:
+            result += self.flags
+        elif type(self.flags) is tuple:
+            for i, el in enumerate(self.flags):
+                result += el
+                if i < len(self.flags) - 1:
+                    result += ":"
+        result += "#"
+
+        result += "#n#$#"
+        if type(self.flags_id) is int:
+            result += str(self.flags_id)
+        elif type(self.flags_id) is tuple:
+            for i, el in enumerate(self.flags_id):
+                result += str(el)
+                if i < len(self.flags_id) - 1:
+                    result += ":"
+        result += "#"
+
         result += f"#t#$#{time.time()}#"
         return result
 
     @staticmethod
     def parse(data: str):
         packet = Ultra()
-        row_data = data.split("\n")
+        row_data = data.split("##")
         data = {}
         for el in row_data:
             row = el.split("#")
-            row = row[1:-1]
+            # row = row[1:-1]
+            try:
+                row.remove('')
+            except ValueError:
+                pass
             row.remove("$")
             dic = {row[0]: row[1]}
             data.update(dic)
             # debugger(i, dic)
         debugger(data)
+
         try:
             packet.operation = data["O"]
         except KeyError:
             packet.operation = UNSET
+
         try:
             pattern1 = "\d+"
-            pattern2 = "[=<>]"
+            pattern2 = "[=<>]|\w+"
             result = re.findall(pattern1, data["o"])
             if len(result) is not 0:
                 debugger(result)
@@ -177,9 +176,9 @@ class Ultra:
                 result = re.findall(pattern2, data["o"])
                 debugger(result)
                 packet.response = result[0]
-
         except KeyError:
             packet.response = UNSET
+
         try:
             pattern = "\w+"
             result = re.findall(pattern, data["f"])
@@ -208,6 +207,8 @@ class Ultra:
             packet.session_id = int(data["I"])
         except KeyError:
             packet.session_id = UNSET
+        except ValueError:
+            packet.session_id = UNSET
         try:
             packet.time = data["t"]
         except KeyError:
@@ -218,7 +219,7 @@ class Ultra:
         result = "("
         if self.operation is not UNSET:
             result += self.operation + ", "
-        if self.response is not UNSET and self.response is not (UNSET,):
+        if self.response is not UNSET:
             result += str(self.response) + ", "
         if self.session_id is not UNSET:
             result += str(self.session_id) + ", "
@@ -238,20 +239,17 @@ def main():
         Ultra(O=RANGE, o=">", I=123456, f=PUSH, n=140), \
         Ultra(O=RANGE, o="<", I=123456, f=PUSH, n=140)
 
-    for el in x:
-        print(el.print())
-    print("===")
-
     # for el in x:
-    #     print(el)
-    #     print("===")
+    #     print(el.print())
 
-    y = []
-    for el in x:
-        y.append(Ultra.parse(el.pack()))
-
-    for el in y:
-        print(el.print())
+    print("===")
+    x = Ultra.parse(x[0].pack())
+    # y = []
+    # for el in x:
+    #     y.append(Ultra.parse(el.pack()))
+    #
+    # for el in y:
+    #     print(el.print())
 
 
 if __name__ == "__main__":
