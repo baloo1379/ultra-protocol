@@ -198,7 +198,7 @@ class GameStart(threading.Thread):
         while True:
             # print(10-el, "s ", end="\r")
             time.sleep(1)
-            if el >= 10:
+            if el >= 15:
                 print("Time is up. Room closed")
                 waiting_for_players = False
                 return

@@ -25,12 +25,25 @@ def client(host, port, c_ip, client_port):
         debugger(response.flags_id, ack_n)
         return
     else:
+        # if room closed
+        players_on_server = response.response
+        if players_on_server == "rejected":
+            print("Room is closed")
+            return
+
         # sending ack of connection
         session_id = response.session_id
         query = Ultra(O=CONNECTING, I=session_id, f=(ACK, SYN), n=int(response.flags_id[0])+1)
         debugger("S", query.print())
         sock.sendto(bytes(query.pack(), "ascii"), server_adddress)
         print("Connected to server")
+
+        if players_on_server == 0:
+            print("You are first player on server")
+        else:
+            print(f"You are {response.response} on server")
+
+        print("Wait for server")
 
         # recv of range
         received = sock.recv(1024)
@@ -82,11 +95,14 @@ def client(host, port, c_ip, client_port):
             debugger(received.print())
             if received.response == "<":
                 print("Too small. Type bigger number.")
-            elif received.response == "=":
-                print("HIT. Congratulations.")
-                w_flag = False
             elif received.response == ">":
                 print("Too big. Type smaller number.")
+            elif received.response == "win":
+                print("HIT. You win!! Congratulations.")
+                w_flag = False
+            elif type(received.response) is int:
+                print("You lose. Player", response.response, "won")
+                w_flag = False
 
             #ack send
             ack_n = received.flags_id+1
@@ -101,6 +117,6 @@ if __name__ == "__main__":
     host = args[1] if len(args) > 1 else HOST
     port = int(args[2]) if len(args) > 2 else PORT
     client_addr = args[3] if len(args) > 3 else HOST
-    client_port = int(args[4]) if len(args) > 4 else PORT-1
+    client_port = int(args[4]) if len(args) > 4 else PORT+random.randrange(-100, 100)
 
     client(host, port, client_addr, client_port)
