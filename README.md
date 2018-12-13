@@ -38,17 +38,17 @@ A text-based protocol made for CS studies at PUT
 
 ## Protocol structure
 ### Required fields
-| field     | key | values                                                  |
-| --------- | --- | ------------------------------------------------------- |
-| Operation | `O` | `connecting`, `range`, `guess`, `session`, `response`   |
-| Response  | `o` | `L`, `L1:L2`, `=`, `>`, `<`                             |
-| ID        | `I` | `session_id`                                            |
+| field     | key | values                                                      |   
+| --------- | --- | ----                                                        |
+| Operation | `O` | `connecting`, `range`, `guess`                              |
+| Response  | `o` | `L`, `L1:L2`, `win`, `>`, `<`, `won_player's_id`, `rejected`|
+| ID        | `I` | `session_id`                                                |
 ### Additional fields
-| field     | key | values                                                  |
-| --------- | --- | ------------------------------------------------------- |
-| Flags     | `f` | `syn`, `ack`, `push`                                    |
-| Flag No.  | `n` | `numeric_flag_id`                                       |
-| Time      | `t` | `timestamp`                                             |
+| field     | key | values                                                      |
+| --------- | --- | -----                                                       |
+| Flags     | `f` | `syn`, `ack`, `push`                                        |
+| Flag No.  | `n` | `numeric_flag_id`                                           |
+| Time      | `t` | `timestamp`                                                 |
 
 ## Communication scheme
 
